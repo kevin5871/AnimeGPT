@@ -16,6 +16,7 @@ import tkinter as tk
 from tkinter import font
 from tkinter import messagebox
 import re
+import socket
 
 
 
@@ -66,14 +67,12 @@ def receive():
 
     for paragraph in paragraphs:
         text2speech(paragraph.text)
-        answer += paragraph
+        answer += paragraph.text
     
-    write_file(answer)
     return answer
     
 
 def text2speech(txt):
-    print(txt)
     gTTS(text=txt, lang=language, slow=False).save(audio_path)
     opt1,opt2 = vc.vc_single(
         sid=0,
@@ -91,43 +90,67 @@ def text2speech(txt):
     )
     sd.play(opt2[1], opt2[0])
 
+#소켓통신
+    
+#서버 소켓 생성
+    
+LOCALHOST = "127.0.0.1"
+PORT = 7000
+
+server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+server.bind((LOCALHOST, PORT))
+
+server.listen(1)
+connectionSock, address = server.accept()
+print("연결됨")
+while True:
+    msg = connectionSock.recv(2048)
+    print(msg)
+    connectionSock.send(ask(msg.decode('utf-8')).replace("ー", "-").encode('utf-8'))
+
+
 #파일통신
     
-input_file_path = 'D:\\GitHub\\AnimeGPT\\input.txt'
-output_file_path = 'D:\\GitHub\\AnimeGPT\\output.txt'
+# input_file_path = 'D:\\GitHub\\AnimeGPT\\input.txt'
+# output_file_path = 'D:\\GitHub\\AnimeGPT\\output.txt'
 
-input_txt = ""
+# input_txt = ""
 
-def read_file():
-    global input_txt
+# fs = open(input_file_path, 'w', encoding='utf-8')
+# fs.write(input_txt)
+# fs.close()
+
+# def read_file():
+#     global input_txt
     
-    input_stream = open(input_file_path, 'r', encoding='utf-8')
-    tmp = input_stream.read()
-    input_stream.close()
+#     input_stream = open(input_file_path, 'r', encoding='utf-8')
+#     tmp = input_stream.read()
+#     input_stream.close()
 
-    if tmp != input_txt:
-        input_txt = tmp
-        write_file(ask(input_txt))
+#     if tmp != input_txt:
+#         input_txt = tmp
+#         write_file(ask(input_txt))
 
-def write_file(content):
-    while True:
-        try:
-            output_stream = open(output_file_path, 'w', encoding='utf-8')
-            break
-        except:
-            print("alread use output")
-            time.sleep(0.5)
-    output_stream.write(content)
-    output_stream.close()
-    
-write_file(input_txt)
+# def write_file(content):
+#     while True:
+#         try:
+#             output_stream = open(output_file_path, 'w', encoding='utf-8')
+#             break
+#         except:
+#             print("alread use output")
+#             time.sleep(0.5)
+#     print(content)
+#     output_stream.write(content)
+#     output_stream.close()
 
-while True:
-    try:
-        read_file()
-    except:
-        print("alread use input")    
-    time.sleep(1)
+# while True:
+#     read_file()
+#     try:
+#         read_file()
+#     except:
+#         print("alread use input")    
+#     time.sleep(1)
 
 # #------------UI-----------------
 
