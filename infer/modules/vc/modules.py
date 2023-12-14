@@ -95,7 +95,7 @@ class VC:
                 "",
                 "",
             )
-        person = f'C:/Users/p1233456/Desktop/Anime GPT/assets/weights/{sid}'
+        person = f'D:/GitHub/AnimeGPT/assets/weights/{sid}'
         logger.info(f"Loading: {person}")
 
         self.cpt = torch.load(person, map_location="cpu")

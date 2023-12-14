@@ -144,10 +144,10 @@ class Pipeline(object):
                 from infer.lib.rmvpe import RMVPE
 
                 logger.info(
-                    "Loading rmvpe model,%s" % "%s/rmvpe.pt" % "C:/Users/p1233456/Desktop/Anime GPT/assets/rmvpe"
+                    "Loading rmvpe model,%s" % "%s/rmvpe.pt" % "D:/Github/AnimeGPT/assets/rmvpe"
                 )
                 self.model_rmvpe = RMVPE(
-                    "%s/rmvpe.pt" % "C:/Users/p1233456/Desktop/Anime GPT/assets/rmvpe",
+                    "%s/rmvpe.pt" % "D:/Github/AnimeGPT/assets/rmvpe",
                     is_half=self.is_half,
                     device=self.device,
                 )

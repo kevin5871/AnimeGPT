@@ -15,39 +15,42 @@ import sounddevice as sd
 import tkinter as tk
 from tkinter import font
 from tkinter import messagebox
+import re
 
 
 
-# 세팅
+# 기본 세팅
 language = 'ja'
-model_name = "suzuran.pth"
-index_path = "C:\\Users\\p1233456\\Desktop\\Anime GPT\\assets\\weights\\added_IVF460_Flat_nprobe_1_suzuran_v2.index"
-audio_path = "C:\\Users\\p1233456\\Desktop\\Anime GPT\\audio\\sample.mp3"
+model_name = "Szrv3.pth"
+index_path = "D:\\GitHub\\AnimeGPT\\assets\\weights\\added_IVF460_Flat_nprobe_1_Szrv3_v2.index"
+audio_path = "D:\\GitHub\\AnimeGPT\\audio\\sample.mp3"
+url = 'https://chat.openai.com/g/g-0LErf1xuT-seujeuran'
 
 config = Config()
 vc = VC(config)
 vc.get_vc(model_name,0.33,0.33)
 
+# 셀레니움 세팅
+
 chrome_options = Options()
-chrome_options.add_argument("user-data-dir=C:\\Users\\p1233456\\AppData\\Local\\Google\\Chrome\\User Data")
+chrome_options.add_argument("user-data-dir=C:\\Users\\user\\AppData\\Local\\Google\\Chrome\\User Data")
 chrome_options.add_argument("--profile-directory=Default")
 chrome_options.add_argument("--start-maximized")
 chrome_options.add_experimental_option("detach", True)
-
 service = Service(ChromeDriverManager().install())
 driver = webdriver.Chrome(service=service, options=chrome_options)
-
-url = 'https://chat.openai.com/g/g-0LErf1xuT-seujeuran'
 driver.get(url)
+
+
 time.sleep(3)
 
-def ask(driver, content):
+def ask(content):
     driver.find_element(By.ID, "prompt-textarea").send_keys(content)
     elements = driver.find_element(By.XPATH, f"//textarea[@id='prompt-textarea']/parent::*/button")
     elements.click()
-    return receive(driver)
+    return receive()
 
-def receive(driver):
+def receive():
     time.sleep(10)
     while True:
         try:
@@ -59,20 +62,18 @@ def receive(driver):
     
     conversation_divs = driver.find_elements(By.XPATH, "//div[contains(@data-testid, 'conversation')]")
     paragraphs = conversation_divs[-1].find_elements(By.TAG_NAME, 'p')
-    answers = ['','']
+    answer = ""
 
-    if len(paragraphs) == 1:
-        answers[1] = paragraphs[0].text.split('\n')[1]
-        answers[0] = paragraphs[0].text.split('\n')[0]
-    else:
-        answers[1] = paragraphs[1].text
-        answers[0] = paragraphs[0].text
-
-    text2speech(answers[0])
-    return answers[1]
+    for paragraph in paragraphs:
+        text2speech(paragraph.text)
+        answer += paragraph
+    
+    write_file(answer)
+    return answer
     
 
 def text2speech(txt):
+    print(txt)
     gTTS(text=txt, lang=language, slow=False).save(audio_path)
     opt1,opt2 = vc.vc_single(
         sid=0,
@@ -90,49 +91,89 @@ def text2speech(txt):
     )
     sd.play(opt2[1], opt2[0])
 
-# Create the main window
-root = tk.Tk()
-root.title("Question and Answer Application")
-self_font = font.Font(family='경기천년제목', size=20)
-
-# Set the size of the window to match the image dimensions
-root.geometry("1365x768")
-
-# Load the background image
-background_image = tk.PhotoImage(file='C:\\Users\\p1233456\\Desktop\\Anime GPT\\lisa.png')
-background_label = tk.Label(root, image=background_image)
-background_label.place(x=0, y=0, relwidth=1, relheight=1)
-
-# Create the output text area
-output_text = tk.Text(root, bg="blue", fg="white", font=("Helvetica", 20))
-output_text.place(x=50, y=500, width=1265, height=200)
-output_text.insert('1.0', "스즈란")
-output_text.config(state=tk.DISABLED)
-
-# Create the input text area
-input_text = tk.Text(root, bg="green", fg="white", font=("Helvetica", 20))
-input_text.place(x=50, y=700, width=1000, height=50)
-
-
-# Function to handle the submission of input
-def submit_input():
-    # Get the input text
-    user_input = input_text.get("1.0", tk.END).strip()
-    if not user_input:
-        messagebox.showwarning("Warning", "Please enter a question.")
-        return
+#파일통신
     
-    # For demonstration, we'll just echo the input in the output area.
-    # In a real application, you could process this input and generate an answer.
-    output_text.config(state=tk.NORMAL)
-    output_text.delete('1.0', tk.END)
-    output_text.insert('1.0', ask(driver, user_input))  # This is where the answer would go
-    output_text.config(state=tk.DISABLED)
-    input_text.delete('1.0', tk.END)
+input_file_path = 'D:\\GitHub\\AnimeGPT\\input.txt'
+output_file_path = 'D:\\GitHub\\AnimeGPT\\output.txt'
 
-# Create the submit button
-submit_button = tk.Button(root, bg="white", fg="black", command=submit_input)
-submit_button.place(x=1000, y=700, width=100, height=50)
+input_txt = ""
 
-# Start the GUI loop
-root.mainloop()
+def read_file():
+    global input_txt
+    
+    input_stream = open(input_file_path, 'r', encoding='utf-8')
+    tmp = input_stream.read()
+    input_stream.close()
+
+    if tmp != input_txt:
+        input_txt = tmp
+        write_file(ask(input_txt))
+
+def write_file(content):
+    while True:
+        try:
+            output_stream = open(output_file_path, 'w', encoding='utf-8')
+            break
+        except:
+            print("alread use output")
+            time.sleep(0.5)
+    output_stream.write(content)
+    output_stream.close()
+    
+write_file(input_txt)
+
+while True:
+    try:
+        read_file()
+    except:
+        print("alread use input")    
+    time.sleep(1)
+
+# #------------UI-----------------
+
+# # Create the main window
+# root = tk.Tk()
+# root.title("Question and Answer Application")
+# self_font = font.Font(family='경기천년제목', size=20)
+
+# # Set the size of the window to match the image dimensions
+# root.geometry("1365x768")
+
+# # Load the background image
+# background_image = tk.PhotoImage(file='D:\\GitHub\\AnimeGPT\\lisa.png')
+# background_label = tk.Label(root, image=background_image)
+# background_label.place(x=0, y=0, relwidth=1, relheight=1)
+
+# # Create the output text area
+# output_text = tk.Text(root, bg="blue", fg="white", font=("Helvetica", 20))
+# output_text.place(x=50, y=500, width=1265, height=200)
+# output_text.insert('1.0', "스즈란")
+# output_text.config(state=tk.DISABLED)
+
+# # Create the input text area
+# input_text = tk.Text(root, bg="green", fg="white", font=("Helvetica", 20))
+# input_text.place(x=50, y=700, width=1000, height=50)
+
+
+# # Function to handle the submission of input
+# def submit_input():
+#     # Get the input text
+#     user_input = input_text.get("1.0", tk.END).strip()
+#     if not user_input:
+#         messagebox.showwarning("Warning", "Please enter a question.")
+#         return
+    
+#     # For demonstration, we'll just echo the input in the output area.
+#     # In a real application, you could process this input and generate an answer.
+#     output_text.config(state=tk.NORMAL)
+#     output_text.delete('1.0', tk.END)
+#     output_text.insert('1.0', ask(user_input))  # This is where the answer would go
+#     output_text.config(state=tk.DISABLED)
+#     input_text.delete('1.0', tk.END)
+
+# # Create the submit button
+# submit_button = tk.Button(root, bg="white", fg="black", command=submit_input)
+# submit_button.place(x=1000, y=700, width=100, height=50)
+
+# # Start the GUI loop
+# root.mainloop()

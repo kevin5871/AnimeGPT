@@ -13,8 +13,8 @@ def modify_text(input_file_path, output_file_path):
     f.write(modified_content)
     f.close()
 
-input_file_path = 'D:\\Github\\ArknightsGameData_YoStar\\ko_KR\gamedata\\story\\activities\\act11d0\\'
-output_file_path = 'C:\\Users\\p1233456\\Desktop\\Anime GPT\\Scripts\\'
+input_file_path = 'D:\\GitHub\\ArknightsGameData_YoStar\\ja_JP\\gamedata\\story\\activities\\act11d0\\'
+output_file_path = 'D:\\GitHub\\AnimeGPT\\Scripts\\JP\\'
 
 file_names = ['level_act11d0_01_beg.txt', 'level_act11d0_01_end.txt','level_act11d0_02_beg.txt', 'level_act11d0_02_end.txt',
               'level_act11d0_03_beg.txt', 'level_act11d0_03_end.txt','level_act11d0_04_beg.txt', 'level_act11d0_04_end.txt',
