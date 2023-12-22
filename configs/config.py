@@ -6,6 +6,8 @@ from multiprocessing import cpu_count
 
 import torch
 
+from tensorflow.python.client import device_lib
+
 try:
     import intel_extension_for_pytorch as ipex  # pylint: disable=import-error, unused-import
 

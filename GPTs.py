@@ -1,9 +1,3 @@
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from webdriver_manager.chrome import ChromeDriverManager
 import time
 from gtts import gTTS 
 import os 
@@ -17,8 +11,8 @@ from tkinter import font
 from tkinter import messagebox
 import re
 import socket
-
-
+import gptparser
+import translate
 
 # 기본 세팅
 language = 'ja'
@@ -30,47 +24,10 @@ url = 'https://chat.openai.com/g/g-0LErf1xuT-seujeuran'
 config = Config()
 vc = VC(config)
 vc.get_vc(model_name,0.33,0.33)
-
-# 셀레니움 세팅
-
-chrome_options = Options()
-chrome_options.add_argument("user-data-dir=C:\\Users\\user\\AppData\\Local\\Google\\Chrome\\User Data")
-chrome_options.add_argument("--profile-directory=Default")
-chrome_options.add_argument("--start-maximized")
-chrome_options.add_experimental_option("detach", True)
-service = Service(ChromeDriverManager().install())
-driver = webdriver.Chrome(service=service, options=chrome_options)
-driver.get(url)
-
+parser = gptparser.Gptparser(url)
+key = translate.getKey()
 
 time.sleep(3)
-
-def ask(content):
-    driver.find_element(By.ID, "prompt-textarea").send_keys(content)
-    elements = driver.find_element(By.XPATH, f"//textarea[@id='prompt-textarea']/parent::*/button")
-    elements.click()
-    return receive()
-
-def receive():
-    time.sleep(10)
-    while True:
-        try:
-            driver.find_element(By.XPATH, f"//textarea[@id='prompt-textarea']/parent::*/button/span[@data-state='closed']")            
-            break
-        except:
-            time.sleep(1)
-            continue
-    
-    conversation_divs = driver.find_elements(By.XPATH, "//div[contains(@data-testid, 'conversation')]")
-    paragraphs = conversation_divs[-1].find_elements(By.TAG_NAME, 'p')
-    answer = ""
-
-    for paragraph in paragraphs:
-        text2speech(paragraph.text)
-        answer += paragraph.text
-    
-    return answer
-    
 
 def text2speech(txt):
     gTTS(text=txt, lang=language, slow=False).save(audio_path)
@@ -90,6 +47,15 @@ def text2speech(txt):
     )
     sd.play(opt2[1], opt2[0])
 
+def massage(msg):
+    print(msg)
+    answers = parser.ask(msg)
+    print(answers[0])
+    text2speech(answers[0])
+    koanswer = translate.Trans(answers[0].replace('ドクター','박사님'),'ja','ko',key)
+    print(koanswer)
+    connectionSock.send(koanswer.encode('utf-8'))
+
 #소켓통신
     
 #서버 소켓 생성
@@ -101,13 +67,18 @@ server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 server.bind((LOCALHOST, PORT))
 
+print("대기중")
 server.listen(1)
 connectionSock, address = server.accept()
 print("연결됨")
+
+#테스트
+
+massage("안녕")
+
 while True:
-    msg = connectionSock.recv(2048)
-    print(msg)
-    connectionSock.send(ask(msg.decode('utf-8')).replace("ー", "-").encode('utf-8'))
+    msg = connectionSock.recv(2048).decode('utf-8')
+    massage(msg)
 
 
 #파일통신
